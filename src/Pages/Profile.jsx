@@ -1,16 +1,16 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { getFirestore, doc, setDoc } from 'firebase/firestore'; 
+import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore'; 
 import { getAuth } from 'firebase/auth'; 
 import { AuthContext } from '../components/AuthProvider';
 
 function Profile() {
-  const [name, setName] = useState("Ruldolf");
-  const [age, setAge] = useState(27);
-  const [height, setHeight] = useState(1.76); // height in meters
-  const [weight, setWeight] = useState(71); // weight in kg
-  const [file, setFile] = useState(null); // Profile image to upload
-  const [profileImageUrl, setProfileImageUrl] = useState(null); // To store uploaded image URL
+  const [name, setName] = useState("");
+  const [age, setAge] = useState(null); 
+  const [height, setHeight] = useState(null); 
+  const [weight, setWeight] = useState(null); 
+  const [file, setFile] = useState(null); 
+  const [profileImageUrl, setProfileImageUrl] = useState(null); 
   const [bmi, setBmi] = useState(null);
   const { currentUser } = useContext(AuthContext);
   const uid = currentUser?.uid;
@@ -19,21 +19,59 @@ function Profile() {
   const db = getFirestore();
   const auth = getAuth();
 
-  // Calculate BMI whenever weight or height changes
+  // Load existing profile data from Firestore when the component mounts
   useEffect(() => {
-    if (weight <= 0) {
-      alert("Please key in your weight (kg)");
-      return;
-    }
-  
-    if (height > 0) {
+    const fetchProfileData = async () => {
+      if (uid) {
+        const docRef = doc(db, "users", uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setName(data.name || "");
+          setAge(data.age || null);
+          setHeight(data.height || null);
+          setWeight(data.weight || null);
+          setProfileImageUrl(data.profileImageUrl || null);
+        } else {
+          console.log("No such document!");
+        }
+      }
+    };
+    fetchProfileData();
+  }, [uid]);
+
+  // Calculate BMI
+  useEffect(() => {
+    if (weight > 0 && height > 0) {
       const bmiValue = (weight / (height * height)).toFixed(2);
       setBmi(bmiValue);
+    } else {
+      setBmi(null);
     }
   }, [weight, height]);
-  
 
-  // Handle profile image upload
+  // Update Firestore with profile data
+  const updateProfileData = async () => {
+    if (uid) {
+      try {
+        await setDoc(doc(db, "users", uid), {
+          name,
+          age,
+          height,
+          weight,
+          profileImageUrl,
+        }, { merge: true });
+      } catch (error) {
+        console.error("Error updating profile data:", error);
+      }
+    }
+  };
+
+  // Call updateProfileData on input change
+  useEffect(() => {
+    updateProfileData();
+  }, [name, age, height, weight, profileImageUrl]);
+
   const handleFileUpload = async () => {
     if (file) {
       const user = auth.currentUser;
@@ -49,14 +87,9 @@ function Profile() {
         const downloadURL = await getDownloadURL(snapshot.ref);
         setProfileImageUrl(downloadURL);
 
-        await setDoc(doc(db, "users", user.uid), {
-          name,
-          age,
-          height,
-          weight,
-          profileImageUrl: downloadURL,
-        });
-
+        // Update Firestore with the new image URL
+        await updateProfileData();
+        
         alert('Profile image uploaded and user profile updated successfully!');
       } catch (error) {
         console.error('Error uploading file:', error);
@@ -67,72 +100,72 @@ function Profile() {
     }
   };
 
-  // Handle form submit
   const handleSubmit = (e) => {
     e.preventDefault();
     handleFileUpload();
   };
 
   return (
-    <div>
-        {profileImageUrl && (
-        <div>
-          <img src={profileImageUrl} alt="Profile" style={{ width: "100px", height: "100px" }} />
+    <div className="container mt-4">
+      {profileImageUrl && (
+        <div className="mb-3">
+          <img src={profileImageUrl} alt="Profile" className="img-thumbnail" style={{ width: "100px", height: "100px" }} />
         </div>
       )}
-      <div>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Name:</label>
+      <form onSubmit={handleSubmit} className="form-group">
+        <div className="mb-3">
+          <label className="form-label">Name:</label>
           <input 
             type="text" 
             value={name} 
             onChange={(e) => setName(e.target.value)} 
-            disabled
+            className="form-control"
           />
         </div>
-        <div>
-          <label>Age:</label>
+        <div className="mb-3">
+          <label className="form-label">Age:</label>
           <input 
             type="number" 
-            value={age} 
-            onChange={(e) => setAge(e.target.value)} 
-            disabled
+            value={age || ''} 
+            onChange={(e) => setAge(e.target.value ? parseInt(e.target.value) : null)} 
+            className="form-control"
           />
         </div>
-        <div>
-          <label>Height (m):</label>
+        <div className="mb-3">
+          <label className="form-label">Height (m):</label>
           <input 
             type="number" 
             step="0.01" 
-            value={height} 
-            onChange={(e) => setHeight(e.target.value)} 
+            value={height || ''} 
+            onChange={(e) => setHeight(e.target.value ? parseFloat(e.target.value) : null)} 
+            className="form-control"
           />
         </div>
-        <div>
-          <label>Weight (kg):</label>
+        <div className="mb-3">
+          <label className="form-label">Weight (kg):</label>
           <input 
             type="number" 
-            value={weight} 
-            onChange={(e) => setWeight(e.target.value)} 
+            value={weight || ''} 
+            onChange={(e) => setWeight(e.target.value ? parseFloat(e.target.value) : null)} 
+            className="form-control"
           />
         </div>
-        <div>
-          <label>Upload Profile Image:</label>
+        <div className="mb-3">
+          <label className="form-label">Upload Profile Image:</label>
           <input 
             type="file" 
             onChange={(e) => setFile(e.target.files[0])} 
+            className="form-control"
           />
         </div>
-        <button type="submit">Upload Profile Image</button>
+        <button type="submit" className="btn btn-primary">Save</button>
       </form>
       
       {bmi && (
-        <div>
+        <div className="mt-3">
           <h3>Hi {name}, your BMI is {bmi}</h3>
         </div>
       )}
-        </div>
     </div>
   );
 }
