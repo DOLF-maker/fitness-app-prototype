@@ -1,13 +1,20 @@
-import React from "react";
+import React, { useContext, useState } from "react";
 import { Button, Container, Nav, Navbar, Dropdown } from "react-bootstrap";
 import { Outlet, useNavigate } from "react-router-dom";
 import Offcanvas from "react-bootstrap/Offcanvas";
+import { AuthContext } from "../components/AuthProvider";
+import { auth } from "../firebase";
 
 function Layout() {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    navigate("/");
+  const handleLogout = async () => {
+    try {
+      await auth.signOut(); // Sign out the user
+      navigate("/"); // Redirect to home or login page
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
   };
 
   const handleManageBooking = () => {
@@ -34,7 +41,7 @@ function Layout() {
             >
               <Offcanvas.Header closeButton>
                 <Offcanvas.Title id={`offcanvasNavbarLabel-expand-${expand}`}>
-                  Offcanvas
+                  Fitness Strive
                 </Offcanvas.Title>
               </Offcanvas.Header>
               <Offcanvas.Body>
