@@ -65,7 +65,7 @@ const EditAppointment = ({ appointmentId, onUpdateSuccess, uid }) => {
           <option value="Physiotherapy">Physiotherapy</option>
           <option value="Cardio">Cardio</option>
           <option value="HIIT">HIIT</option>
-          <option value="HIIT">Martial Art</option>
+          <option value="Martial Art">Martial Art</option>
         </Form.Control>
       </Form.Group>
 
