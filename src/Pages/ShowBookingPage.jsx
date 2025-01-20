@@ -1,15 +1,15 @@
 // ShowBookingPage.jsx
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Container, Row, Col, Button } from 'react-bootstrap';
-import AddAppointment from './BookingForm';
-import EditAppointment from './EditAppointment';
-import { AuthContext } from '../components/AuthProvider';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { Container, Row, Col, Button } from "react-bootstrap";
+import AddAppointment from "./BookingForm";
+import EditAppointment from "./EditAppointment";
+import { AuthContext } from "../components/AuthProvider";
 
 const ShowAppointmentCard = () => {
-    const BASE_URL = import.meta.env.VITE_BASE_URL;
-    const uid = "USER_UID";
- 
+  const BASE_URL = import.meta.env.VITE_BASE_URL;
+  const uid = "USER_UID";
+
   const [appointments, setAppointments] = useState([]);
   const [editingId, setEditingId] = useState(null); // Track which appointment is being edited
 
@@ -22,9 +22,9 @@ const ShowAppointmentCard = () => {
     try {
       await axios.delete(`${BASE_URL}/appointments/${id}`);
       // Refresh the appointment list after deletion
-      fetchAppointments(); 
+      fetchAppointments();
     } catch (error) {
-      console.error('Error deleting the appointment', error);
+      console.error("Error deleting the appointment", error);
     }
   };
 
@@ -34,8 +34,8 @@ const ShowAppointmentCard = () => {
 
   return (
     <Container fluid className="mt-4">
-      <AddAppointment fetchAppointments={fetchAppointments} />  {/* Pass fetchAppointments to AddAppointment */}
-    
+      <AddAppointment fetchAppointments={fetchAppointments} />{" "}
+      {/* Pass fetchAppointments to AddAppointment */}
     </Container>
   );
 };
